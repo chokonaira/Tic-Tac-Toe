@@ -1,13 +1,13 @@
 const boxs = document.querySelectorAll(".box");
 const possibilitiesToWin = [[1,2,3],[4,5,6],[7,8,9],[1,5,9],[3,5,7],[1,4,7],[2,5,8],[3,6,9]];
 let boxNumbers = [1,2,3,4,5,6,7,8,9];
-let firstPlayer = [], computer = [];
+let humanPlayer = [], computer = [];
 /*******************************************************/
 function check(array){
   let finalResult = false;
   for(let item of possibilitiesToWin){
-    let res = item.every(val => array.indexOf(val) !== -1);
-    if(res){
+    let result = item.every(value => array.indexOf(value) !== -1);
+    if(result){
         finalResult = true;
       break;
     }
@@ -15,44 +15,45 @@ function check(array){
   return finalResult;
 }
 /*******************************************************/
-function checkForBlock(){
+function checkForWinPostion(potentialWinner, blocker){
   let finalResult = -1;
   for(let item of possibilitiesToWin){
-    let a = item[0] , b = item[1] , c = item[2];
-    if(firstPlayer.includes(a) && firstPlayer.includes(b) && !computer.includes(c)){
-      finalResult = c;
+    let firstChance = item[0] , secondChance = item[1] , thirdChance = item[2];
+    if(potentialWinner.includes(firstChance) && potentialWinner.includes(secondChance) && !blocker.includes(thirdChance)){
+      finalResult = thirdChance;
       break;
-    } else if(firstPlayer.includes(b) && firstPlayer.includes(c) && !computer.includes(a)){
-      finalResult = a;
+    } else if(potentialWinner.includes(secondChance) && potentialWinner.includes(thirdChance) && !blocker.includes(firstChance)){
+      finalResult = firstChance;
       break;
-    } else if(firstPlayer.includes(a) && firstPlayer.includes(c) && !computer.includes(b)){
-      finalResult = b;
+    } else if(potentialWinner.includes(firstChance) && potentialWinner.includes(thirdChance) && !blocker.includes(secondChance)){
+      finalResult = secondChance;
       break;
     }
   }
   return finalResult;
 }
+
 /*******************************************************/
-function winnerpleyr(p){
+function winnerpleyr(message){
   const modal = document.createElement("div");
-  const player = document.createTextNode(p);
+  const player = document.createTextNode(message);
   const replay = document.createElement("button");
-  modal.classList.add("winner");
+  modal.classList.add("modal");
   modal.appendChild(player);
   replay.appendChild(document.createTextNode("Replay"));
-  replay.setAttribute("onclick","rep()");
+  replay.setAttribute("onclick","playAgain()");
   modal.appendChild(replay);
   document.body.appendChild(modal);
 }
 /*******************************************************/
 function draw(){
-  if(this.classList == "box"){
+  let currentBoxIndex = Number(this.dataset.index);
+  if(![...humanPlayer, ...computer].includes(currentBoxIndex)){
     this.classList.add("x");
-    let boxIndx = Number(this.dataset.index);
-    let arrayIndx = boxNumbers.indexOf(boxIndx);
+    let arrayIndx = boxNumbers.indexOf(currentBoxIndex);
     boxNumbers.splice(arrayIndx,1);
-    firstPlayer.push(boxIndx);
-    if(check(firstPlayer)){
+    humanPlayer.push(currentBoxIndex);
+    if(check(humanPlayer)){
       winnerpleyr("congrats, you win 🎉🎉");
       return;
     }
@@ -60,20 +61,22 @@ function draw(){
       winnerpleyr("Draw");
       return;
     }
-    boxIndx = checkForBlock();
-    if(boxIndx !== -1){
-      arrayIndx = boxNumbers.indexOf(boxIndx);
+    currentBoxIndex = checkForWinPostion(humanPlayer, computer);
+    if(currentBoxIndex !== -1){
+      const computerWinPosition = checkForWinPostion(computer, humanPlayer);
+      currentBoxIndex = computerWinPosition !== -1 ? computerWinPosition : currentBoxIndex;
+      arrayIndx = boxNumbers.indexOf(currentBoxIndex);
       boxNumbers.splice(arrayIndx,1);
-      let computerDraw = document.querySelector(`[data-index="${boxIndx}"]`);
+      let computerDraw = document.querySelector(`[data-index="${currentBoxIndex}"]`);
       computerDraw.classList.add("o");
       computer.push(Number(computerDraw.dataset.index));
     } else{
       let boxNumbersLength = boxNumbers.length;
       let random = Math.floor(Math.random() * boxNumbersLength);
-      boxIndx = boxNumbers[random];
-      arrayIndx = boxNumbers.indexOf(boxIndx);
+      currentBoxIndex = boxNumbers[random];
+      arrayIndx = boxNumbers.indexOf(currentBoxIndex);
       boxNumbers.splice(arrayIndx,1);
-      let computerDraw = document.querySelector(`[data-index="${boxIndx}"]`);
+      let computerDraw = document.querySelector(`[data-index="${currentBoxIndex}"]`);
       computerDraw.classList.add("o");
       computer.push(Number(computerDraw.dataset.index)); 
     }
@@ -84,13 +87,13 @@ function draw(){
   }
 }
 /*******************************************************/
-function rep(){
-  const w = document.querySelector(".winner");
+function playAgain(){
+  const modal = document.querySelector(".modal");
   boxs.forEach(box => box.classList = "box");
   boxNumbers = [1,2,3,4,5,6,7,8,9]
-  firstPlayer = [];
+  humanPlayer = [];
   computer = [];
-  w.remove();
+  modal.remove();
 }
 /*******************************************************/
 boxs.forEach(box => box.addEventListener("click", draw));
